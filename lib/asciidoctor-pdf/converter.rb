@@ -2231,11 +2231,16 @@ class Converter < ::Prawn::Document
     # IMPORTANT this is the first page created, so we need to set the base font
     font @theme.base_font_family, size: @theme.base_font_size
 
+    if (sect_id = node.id) == 'index' || sect_id == 'appendix'
+      page_prefix = sect_id
+    else
+      page_prefix = 'chapter'
+    end
     # QUESTION allow alignment per element on chapter page?
-    chapter_align = (@theme.chapter_page_align || @base_align).to_sym
+    chapter_align = (@theme.send("#{page_prefix}_page_align") || @base_align).to_sym
 
     # TODO disallow .pdf as image type
-    if (logo_image_path = (doc.attr 'chapter-logo-image', @theme.chapter_page_logo_image))
+    if (logo_image_path = (doc.attr "#{page_prefix}-logo-image", @theme.send("#{page_prefix}_page_logo_image")))
       if (logo_image_path.include? ':') && logo_image_path =~ ImageAttributeValueRx
         logo_image_path = $1
         logo_image_attrs = (AttributeList.new $2).parse ['alt', 'width', 'height']
@@ -2245,13 +2250,13 @@ class Converter < ::Prawn::Document
         relative_to_imagesdir = false
       end
       # HACK quick fix to resolve image path relative to theme
-      unless doc.attr? 'chapter-logo-image'
+      unless doc.attr? "#{page_prefix}-logo-image"
         logo_image_path = ThemeLoader.resolve_theme_asset logo_image_path, (doc.attr 'pdf-stylesdir')
       end
       logo_image_attrs['target'] = logo_image_path
-      logo_image_attrs['align'] ||= (@theme.chapter_page_logo_align || chapter_align.to_s)
+      logo_image_attrs['align'] ||= (@theme.send("#{page_prefix}_page_logo_align") || chapter_align.to_s)
       # QUESTION should we allow theme to turn logo image off?
-      logo_image_top = logo_image_attrs['top'] || @theme.chapter_page_logo_top || '10%'
+      logo_image_top = logo_image_attrs['top'] || @theme.send("#{page_prefix}_page_logo_top") || '10%'
       # FIXME delegate to method to convert page % to y value
       if logo_image_top.end_with? 'vh'
         logo_image_top = page_height - page_height * logo_image_top.to_f / 100.0
@@ -2267,8 +2272,8 @@ class Converter < ::Prawn::Document
     end
 
     # TODO prevent content from spilling to next page
-    theme_font :chapter_page do
-      if (chapter_top = @theme.chapter_page_title_top)
+    theme_font "#{page_prefix}_page".to_sym do
+      if (chapter_top = @theme.send("#{page_prefix}_page_title_top"))
         if chapter_top.end_with? 'vh'
           chapter_top = page_height - page_height * chapter_top.to_f / 100.0
         else
@@ -2277,21 +2282,20 @@ class Converter < ::Prawn::Document
         # FIXME delegate to method to convert page % to y value
         @y = chapter_top
       end
-      move_down (@theme.chapter_page_title_margin_top || 0)
-      theme_font :chapter_page_title do
+      move_down (@theme.send("#{page_prefix}_page_title_margin_top") || 0)
+      theme_font "#{page_prefix}_page_title".to_sym do
         layout_heading title,
           align: chapter_align,
           margin: 0,
-          line_height: @theme.chapter_page_title_line_height
+          line_height: @theme.send("#{page_prefix}_page_title_line_height")
       end
-      move_down (@theme.chapter_page_title_margin_bottom || 0)
+      move_down (@theme.send("#{page_prefix}_page_title_margin_bottom") || 0)
     end
 
     if doc.attributes['chapter_pages_on_own_page']
       start_new_page
       update_colors
     end
-
   end
 
   alias :start_new_part :start_new_chapter
