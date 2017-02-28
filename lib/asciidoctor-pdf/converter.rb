@@ -2212,6 +2212,10 @@ class Converter < ::Prawn::Document
   end
 
   def layout_chapter_title node, title, opts = {}
+    if node.level > 0
+      layout_heading title, opts
+      return
+    end
     doc = node.document
     prev_bg_image = @page_bg_image
     prev_bg_color = @page_bg_color
