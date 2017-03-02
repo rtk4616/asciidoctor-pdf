@@ -2295,11 +2295,6 @@ class Converter < ::Prawn::Document
       end
       move_down (@theme.send("#{page_prefix}_page_title_margin_bottom") || 0)
     end
-
-    if doc.attributes['chapter_pages_on_own_page']
-      start_new_page
-      update_colors
-    end
   end
 
   alias :start_new_part :start_new_chapter
