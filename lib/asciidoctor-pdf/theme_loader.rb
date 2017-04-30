@@ -106,6 +106,8 @@ class ThemeLoader
         [key2.to_sym, (key2.end_with? '_color') ? to_color(evaluate val2, data) : (evaluate val2, data)]
       end.to_h
     elsif ::Hash === val
+      # mark that this category was specified in the yaml theme
+      data[key + '?'] = true
       val.each do |key2, val2|
         process_entry %(#{key}_#{key2.tr '-', '_'}), val2, data
       end

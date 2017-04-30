@@ -2212,10 +2212,11 @@ class Converter < ::Prawn::Document
   end
 
   def layout_chapter_title node, title, opts = {}
-    if node.level > 0
+    if (node.level > 0) || !(page_prefix = page_prefix_for node.id)
       layout_heading title, opts
       return
     end
+
     doc = node.document
     prev_bg_image = @page_bg_image
     prev_bg_color = @page_bg_color
@@ -2235,11 +2236,6 @@ class Converter < ::Prawn::Document
     # IMPORTANT this is the first page created, so we need to set the base font
     font @theme.base_font_family, size: @theme.base_font_size
 
-    if (sect_id = node.id) == 'index' || sect_id == 'appendix'
-      page_prefix = sect_id
-    else
-      page_prefix = 'chapter'
-    end
     # QUESTION allow alignment per element on chapter page?
     chapter_align = (@theme.send("#{page_prefix}_page_align") || @base_align).to_sym
 
@@ -2295,6 +2291,18 @@ class Converter < ::Prawn::Document
       end
       move_down (@theme.send("#{page_prefix}_page_title_margin_bottom") || 0)
     end
+  end
+
+  def page_prefix_for sect_id
+    sections = ['index', 'appendix']
+    page_prefix = sections.select { |section_title| section_title == sect_id }[0]
+    return page_prefix if defined_in_theme? page_prefix
+    page_prefix = 'chapter'
+    return page_prefix if defined_in_theme? page_prefix
+  end
+
+  def defined_in_theme? sect_id
+    @theme.send("#{sect_id}_page?")
   end
 
   alias :start_new_part :start_new_chapter
